@@ -1,0 +1,120 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="row m-5">
+        <div class="col-lg-4 offset-lg-4">
+            <div class="card shadow-lg personal-info" style="display:none;">
+                <div class="card-header">
+                    Add New Person
+                </div>
+                <div class="card-body" style="display:noine;">
+                    <form>
+                        <img id="snapshot" src="" class="card-img-top" alt="..."></img>
+                        <div class="form-group mt-3">
+                            <label for="exampleInputEmail1" class="width-left">Name:</label>
+                            <input type="input" class="form-control" id="name" aria-describedby="emailHelp"
+                                placeholder="Enter Name" required></input>
+                        </div>
+                        <div class="form-group">
+                            <label for="exampleInputPassword1" class="width-left">Phone Number(with country code):</label>
+                            <input type="text" class="form-control" id="phone" placeholder="+19876543210"
+                                required></input>
+                        </div>
+                        <button id="submit-button" type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                    <div class="mt-2">
+                        <div id="error" class="text-danger"></div>
+                        <div id="success" class="text-success"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="lib/axios/dist/axios.standalone.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/rollups/hmac-sha256.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/rollups/sha256.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/components/hmac.js"></script>
+    <script type="text/javascript" src="lib/CryptoJS/components/enc-base64.js"></script>
+    <script type="text/javascript" src="lib/url-template/url-template.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/sigV4Client.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/apiGatewayClient.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/simpleHttpClient.js"></script>
+    <script type="text/javascript" src="lib/apiGatewayCore/utils.js"></script>
+    <script type="text/javascript" src="apigClient.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+        $('#submit-button').on('click', function () {
+            var phoneNumber = $('#phone').val();
+            var name = $('#name').val();
+            if (!phoneNumber || phoneNumber.length === 0 || !name || name.length === 0) {
+                $('#success').hide();
+                $('#error').html('Name and Phone Number are mandatory.').show();
+                return false;
+            }
+            $('#error').hide();
+            $('#success').html('Uploading...').show();
+            var apigClient = apigClientFactory.newClient();
+			debugger;
+            apigClient.putVisitorInformationPost({}, {
+                "phone_number": phoneNumber,
+                "name": name,
+                "base64_encoded_image": $('#snapshot').attr('src')
+            }, {})
+                .then(function (result) {
+				debugger;
+                    $('#error').hide();
+                    $('#success').html('New person added to database.').show();
+                }).catch(function (result) {
+                    $('#success').hide();
+                    $('#error').html('Could not store new persons information').show();
+                });
+            return false;
+        });
+        var apigClient = apigClientFactory.newClient();
+		debugger;
+        apigClient
+            .getUnknownVisitorImageStringGet({}, {}, {
+                queryParams: {
+                    uuid: getParameterByName('uuid')
+                }
+            })
+            .then(function (result) {
+                var response = result.data;
+                if (response === 'Invalid UUID') {
+                    $('form').hide();
+                    $('.personal-info').show();
+                    $('#success').hide();
+                    $('#error').html('Invalid UUID').show();
+                } else {
+                    $('#snapshot').attr('src', response);
+                    $('.personal-info').show();
+                    $('form').show();
+                }
+
+            })
+            .catch(function (result) {
+                $('form').hide();
+                $('.personal-info').show();
+                $('#success').hide();
+                $('#error').html('Invalid UUID').show();
+            })
+    </script>
+
+
+</body>
+
+</html>
